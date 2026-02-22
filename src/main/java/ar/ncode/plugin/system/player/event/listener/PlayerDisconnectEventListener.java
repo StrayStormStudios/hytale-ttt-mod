@@ -43,11 +43,11 @@ public class PlayerDisconnectEventListener implements Consumer<PlayerDisconnectE
 		if (playerInfo != null) {
 			PlayerDeathSystem.updatePlayerCountsOnPlayerDeath(playerRef, playerInfo.getCurrentRoundRole(), gameModeState);
 			graveStone.setDeadPlayerRole(playerInfo.getCurrentRoundRole());
-			graveStone.setTimeOfDeath(gameModeState.getRoundRemainingTime().format(timeFormatter));
+			graveStone.setTimeOfDeath(gameModeState.getRemainingTime(gameModeState.roundState, gameModeState.playersAreVotingMap()).format(timeFormatter));
 		}
 
 		graveStone.setDeadPlayerName(playerRef.getUsername());
-		DeathSystem.spawnRemainsAtPlayerDeath(world, graveStone, reference);
+		DeathSystem.spawnRemainsAtPlayerDeath(world, graveStone, reference, reference.getStore());
 	}
 
 	private static void notEnoughPlayersLogic(Store<EntityStore> store, World world) {
@@ -93,13 +93,13 @@ public class PlayerDisconnectEventListener implements Consumer<PlayerDisconnectE
 		// Remove from spectator tracking
 		gameModeState.spectators.remove(playerRef.getUuid());
 		gameModeState.traitorsAlive.remove(playerRef.getUuid());
-		gameModeState.innocentsAlice.remove(playerRef.getUuid());
+		gameModeState.innocentsAlive.remove(playerRef.getUuid());
 
 		world.execute(() -> {
 			if (!reference.isValid()) return;
 			var playerInfo = store.getComponent(reference, PlayerGameModeInfo.componentType);
 
-			SpectatorMode.disableSpectatorModeForPlayer(new PlayerComponents(null, playerRef, playerInfo, reference));
+			SpectatorMode.disableSpectatorModeForPlayer(new PlayerComponents(null, playerRef, playerInfo, reference), reference.getStore());
 			store.removeComponentIfExists(reference, LostInCombat.componentType);
 			store.removeComponentIfExists(reference, ConfirmedDeath.componentType);
 

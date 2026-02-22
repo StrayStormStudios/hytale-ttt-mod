@@ -1,6 +1,5 @@
 package ar.ncode.plugin.system.player.event.listener;
 
-import ar.ncode.plugin.TroubleInTrorkTownPlugin;
 import ar.ncode.plugin.accessors.WorldAccessors;
 import ar.ncode.plugin.commands.SpectatorMode;
 import ar.ncode.plugin.component.PlayerGameModeInfo;
@@ -22,7 +21,6 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static ar.ncode.plugin.TroubleInTrorkTownPlugin.gameModeStateForWorld;
@@ -54,36 +52,6 @@ public class PlayerReadyEventListener implements Consumer<PlayerReadyEvent> {
 		return RoundState.IN_GAME.equals(gameModeState.roundState) || RoundState.AFTER_GAME.equals(gameModeState.roundState);
 	}
 
-	/**
-	 * Schedules a world transition with a delay to prevent fade conflicts.
-	 * The client needs time to fully initialize after joining before we can teleport.
-	 * Also ensures only one transition happens at a time.
-	 */
-	private static void scheduleWorldTransition(World world, Runnable transitionAction) {
-		// Skip if a transition is already in progress
-		if (TroubleInTrorkTownPlugin.isWorldTransitionInProgress) {
-			return;
-		}
-
-		// Mark transition as pending
-		TroubleInTrorkTownPlugin.isWorldTransitionInProgress = true;
-
-		// Delay the transition to allow client to fully initialize after initial join
-		// 3 seconds should be enough for the client to complete any pending fade/loading
-		HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> world.execute(() -> {
-			try {
-				transitionAction.run();
-			} finally {
-				// Reset flag after additional delay for the actual fade to complete
-				HytaleServer.SCHEDULED_EXECUTOR.schedule(
-						() -> TroubleInTrorkTownPlugin.isWorldTransitionInProgress = false,
-						2,
-						TimeUnit.SECONDS
-				);
-			}
-		}), 2, TimeUnit.SECONDS);
-	}
-
 	private static void configurePlayerPermissions(PlayerRef playerRef) {
 		PermissionsModule permissions = PermissionsModule.get();
 		permissions.addUserToGroup(playerRef.getUuid(), TTT_USER_GROUP);
@@ -100,7 +68,6 @@ public class PlayerReadyEventListener implements Consumer<PlayerReadyEvent> {
 
 		world.execute(() -> {
 			PlayerRef playerRef = reference.getStore().getComponent(reference, PlayerRef.getComponentType());
-
 			if (playerRef == null) {
 				return;
 			}
@@ -114,7 +81,6 @@ public class PlayerReadyEventListener implements Consumer<PlayerReadyEvent> {
 				gameModeState = new GameModeState();
 				gameModeStateForWorld.put(world.getWorldConfig().getUuid(), gameModeState);
 			}
-
 
 			var player = new PlayerComponents(playerComponent, playerRef, playerInfo, reference);
 			player.info().setWorldInstance(world.getWorldConfig().getUuid());
@@ -135,12 +101,8 @@ public class PlayerReadyEventListener implements Consumer<PlayerReadyEvent> {
 			}
 
 			effectController.clearEffects(reference, reference.getStore());
-			SpectatorMode.disableSpectatorModeForPlayer(player);
 			playerComponent.getInventory().clear();
-
-			if (gameModeState.roundState.equals(RoundState.IN_GAME)) {
-				playerInfo.setSpectator(true);
-			}
+			SpectatorMode.disableSpectatorModeForPlayer(player, reference.getStore());
 
 			var hud = loadHudForPlayer(playerComponent, playerRef, playerInfo);
 			playerInfo.setHud(hud);
@@ -151,7 +113,7 @@ public class PlayerReadyEventListener implements Consumer<PlayerReadyEvent> {
 						.dispatch(new StartNewRoundEvent(world.getWorldConfig().getUuid()));
 
 			} else if (playerCanNotSpawn(gameModeState)) {
-				SpectatorMode.setGameModeToSpectator(player);
+				SpectatorMode.setGameModeToSpectator(player, reference.getStore());
 			}
 
 			gameModeStateForWorld.put(world.getWorldConfig().getUuid(), gameModeState);

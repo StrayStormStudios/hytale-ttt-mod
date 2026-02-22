@@ -4,7 +4,10 @@ import ar.ncode.plugin.component.DeadPlayerInfoComponent;
 import ar.ncode.plugin.model.enums.RoundState;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -21,20 +24,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static ar.ncode.plugin.TroubleInTrorkTownPlugin.config;
 
+@Getter
+@Setter
 @ToString
 public class GameModeState {
 
 	public static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("mm:ss");
 	public RoundState roundState = RoundState.PREPARING;
 	public Set<UUID> traitorsAlive = ConcurrentHashMap.newKeySet();
-	public Set<UUID> innocentsAlice = ConcurrentHashMap.newKeySet();
+	public Set<UUID> innocentsAlive = ConcurrentHashMap.newKeySet();
 	public Set<UUID> spectators = ConcurrentHashMap.newKeySet();
 	public Map<UUID, Integer> karmaUpdates = new HashMap<>();
+	public Map<UUID, Integer> killUpdates = new HashMap<>();
+	public Map<UUID, Integer> deathsUpdates = new HashMap<>();
 	public LocalDateTime roundStateUpdatedAt;
 	public List<DeadPlayerInfoComponent> graveStones = new ArrayList<>();
 	public List<Ref<EntityStore>> corpses = new ArrayList<>();
 	public int playedRounds = 0;
 	public Map<String, Integer> mapVotes = new HashMap<>();
+	@Accessors(fluent = true)
+	private boolean playersAreVotingMap = false;
 
 	public void addGraveStone(DeadPlayerInfoComponent graveStone) {
 		this.graveStones.add(graveStone);
@@ -49,9 +58,23 @@ public class GameModeState {
 		return Duration.between(roundStateUpdatedAt, currentDateTime);
 	}
 
-	public LocalTime getRoundRemainingTime() {
+	public LocalTime getRemainingTime(RoundState roundState, boolean playersAreVotingMap) {
 		Duration roundElapsedTime = getElapsedTimeSinceRoundUpdate();
-		long remainingTime = config.get().getRoundDurationInSeconds() - roundElapsedTime.toSeconds();
+
+		int stateDuration = 0;
+		if (RoundState.IN_GAME.equals(roundState)) {
+			stateDuration = config.get().getRoundDurationInSeconds();
+
+		} else if (RoundState.PREPARING.equals(roundState)) {
+			stateDuration = config.get().getTimeBeforeRoundInSeconds();
+
+		} else if (RoundState.AFTER_GAME.equals(roundState) && playersAreVotingMap) {
+			stateDuration = config.get().getTimeToVoteMapInSeconds();
+		} else {
+			stateDuration = config.get().getTimeAfterRoundInSeconds();
+		}
+
+		long remainingTime = stateDuration - roundElapsedTime.toSeconds();
 
 		long minutes = remainingTime / 60; // Remainder minutes after full hours
 		long seconds = remainingTime % 60; // Remainder seconds after full minutes
@@ -79,4 +102,5 @@ public class GameModeState {
 		roundState = state;
 		roundStateUpdatedAt = LocalDateTime.now();
 	}
+
 }
