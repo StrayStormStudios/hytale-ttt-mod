@@ -3,6 +3,7 @@ package ar.ncode.plugin.commands.map;
 import ar.ncode.plugin.TroubleInTrorkTownPlugin;
 import ar.ncode.plugin.accessors.WorldAccessors;
 import ar.ncode.plugin.asset.WorldPreviewLoader;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
@@ -10,6 +11,8 @@ import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredAr
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.arguments.types.RelativeDoublePosition;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
+import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.universe.world.World;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -30,8 +33,39 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ar.ncode.plugin.model.CustomPermissions.TTT_MAP_CRUD;
+import static ar.ncode.plugin.model.CustomPermissions.TTT_MAP_SAVE;
 
 public class CrudMapCommand {
+
+	private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+
+	public static void reloadMaps() throws Exception {
+		TroubleInTrorkTownPlugin.worldPreviews = WorldPreviewLoader.load(
+				TroubleInTrorkTownPlugin.instance.templatesPath,
+				TroubleInTrorkTownPlugin.instance.getDataDirectory()
+		);
+
+		TroubleInTrorkTownPlugin.instance.loadMapsEntries();
+		TroubleInTrorkTownPlugin.instance.loadMapsConfig();
+	}
+
+	public static void copyFiles(Stream<Path> stream, Path currentChunksFolder, Path mapFolder) {
+		stream.forEach(src -> {
+			try {
+				Path rel = currentChunksFolder.relativize(src);
+				Path dst = mapFolder.resolve(rel.toString());
+				if (Files.isDirectory(src)) {
+					Files.createDirectories(dst);
+				} else {
+					Files.createDirectories(dst.getParent());
+					LOGGER.atInfo().log("File copied from %s to %s", src, dst);
+					Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
+				}
+			} catch (IOException ex) {
+				throw new RuntimeException(ex);
+			}
+		});
+	}
 
 
 	public static class CreateMapCommand extends AbstractAsyncCommand {
@@ -62,20 +96,7 @@ public class CrudMapCommand {
 				if ("file".equalsIgnoreCase(uri.getScheme())) {
 					Path templatesRoot = Paths.get(uri);
 					try (Stream<Path> stream = Files.walk(templatesRoot)) {
-						stream.forEach(src -> {
-							try {
-								Path rel = templatesRoot.relativize(src);
-								Path dst = mapFolder.resolve(rel.toString());
-								if (Files.isDirectory(src)) {
-									Files.createDirectories(dst);
-								} else {
-									Files.createDirectories(dst.getParent());
-									Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
-								}
-							} catch (IOException ex) {
-								throw new RuntimeException(ex);
-							}
-						});
+						copyFiles(stream, templatesRoot, mapFolder);
 					}
 					return;
 				} else if (uri.getScheme().startsWith("jar")) {
@@ -118,13 +139,7 @@ public class CrudMapCommand {
 				}
 			}
 
-			TroubleInTrorkTownPlugin.worldPreviews = WorldPreviewLoader.load(
-					TroubleInTrorkTownPlugin.instance.templatesPath,
-					TroubleInTrorkTownPlugin.instance.getDataDirectory()
-			);
-
-			TroubleInTrorkTownPlugin.instance.loadMapsEntries();
-			TroubleInTrorkTownPlugin.instance.loadMapsConfig();
+			reloadMaps();
 
 			ctx.sendMessage(Message.raw("Map " + name + " created."));
 		}
@@ -272,13 +287,7 @@ public class CrudMapCommand {
 				}
 			}
 
-			TroubleInTrorkTownPlugin.worldPreviews = WorldPreviewLoader.load(
-					TroubleInTrorkTownPlugin.instance.templatesPath,
-					TroubleInTrorkTownPlugin.instance.getDataDirectory()
-			);
-
-			TroubleInTrorkTownPlugin.instance.loadMapsEntries();
-			TroubleInTrorkTownPlugin.instance.loadMapsConfig();
+			reloadMaps();
 
 			ctx.sendMessage(Message.raw("Map renamed from '" + oldName + "' to '" + newName + "'."));
 		}
@@ -342,13 +351,7 @@ public class CrudMapCommand {
 				return;
 			}
 
-			TroubleInTrorkTownPlugin.worldPreviews = WorldPreviewLoader.load(
-					TroubleInTrorkTownPlugin.instance.templatesPath,
-					TroubleInTrorkTownPlugin.instance.getDataDirectory()
-			);
-
-			TroubleInTrorkTownPlugin.instance.loadMapsEntries();
-			TroubleInTrorkTownPlugin.instance.loadMapsConfig();
+			reloadMaps();
 
 			ctx.sendMessage(Message.raw("Map '" + name + "' deleted."));
 		}

@@ -2,6 +2,7 @@ package ar.ncode.plugin.system.event.handler;
 
 import ar.ncode.plugin.commands.ChangeWorldCommand;
 import ar.ncode.plugin.model.GameModeState;
+import ar.ncode.plugin.model.enums.RoundState;
 import ar.ncode.plugin.system.event.FinishCurrentMapEvent;
 import ar.ncode.plugin.ui.pages.MapVotePage;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -60,8 +61,6 @@ public class FinishCurrentMapEventHandler implements Consumer<FinishCurrentMapEv
 		if (world == null) return;
 
 		world.execute(() -> {
-			gameModeStateForWorld.get(currentInstance).playersAreVotingMap(true);
-
 			EventTitleUtil.showEventTitleToWorld(
 					Message.translation(MAP_VOTE_NOTIFICATION.get()),
 					Message.raw(""),
@@ -70,9 +69,14 @@ public class FinishCurrentMapEventHandler implements Consumer<FinishCurrentMapEv
 					world.getEntityStore().getStore()
 			);
 
+			gameModeStateForWorld.get(currentInstance).playersAreVotingMap(true);
+			gameModeStateForWorld.get(currentInstance).updateRoundState(RoundState.AFTER_GAME);
+
 			var players = getPlayersAt(world);
 
 			for (var player : players) {
+				player.info().setCurrentRoundRole(null);
+
 				if (player.info().getHud() != null) {
 					player.info().getHud().update();
 				}
