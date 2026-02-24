@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 public enum TranslationKey {
 
 	HUD_CURRENT_STATUS_PREPARING("#838D9C"),
+	HUD_CURRENT_STATUS_VOTING_MAP("#838D9C"),
 	HUD_CURRENT_STATUS_SPECTATOR("#838D9C"),
 
 	SCOREBOARD_TITLE,
@@ -61,7 +62,7 @@ public enum TranslationKey {
 	TRAITORS_CHAT_PREFIX,
 	;
 
-	public static final String LANG_FILE_NAME = "ncodeTTT";
+		public static final String LANG_FILE_NAME = "ncodeTTT";
 	@Getter
 	private String messageColor;
 
