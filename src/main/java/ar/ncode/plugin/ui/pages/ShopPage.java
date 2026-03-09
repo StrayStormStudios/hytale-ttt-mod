@@ -1,7 +1,7 @@
 package ar.ncode.plugin.ui.pages;
 
 import ar.ncode.plugin.TroubleInTrorkTownPlugin;
-import ar.ncode.plugin.component.PlayerGameModeInfo;
+import ar.ncode.plugin.ecs.component.PlayerGameModeInfo;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -28,7 +28,7 @@ import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import java.util.List;
 
 import static ar.ncode.plugin.TroubleInTrorkTownPlugin.config;
-import static ar.ncode.plugin.model.TranslationKey.*;
+import static ar.ncode.plugin.model.enums.TranslationKey.*;
 import static ar.ncode.plugin.model.enums.RoundState.IN_GAME;
 
 public class ShopPage extends InteractiveCustomUIPage<ShopPage.ShopInteractionEvent> {
