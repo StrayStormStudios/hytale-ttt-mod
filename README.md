@@ -179,6 +179,10 @@ testing, and limited to:
 
 - Code snippets.
 - Text content, descriptions, and documentation.
-- Provisional concept art used for mandatory logos, banners, and also for prototyping with temporary models.
+- Original project logo, used as concept art.
+
+## Art
+
+- A Trork in Trouble - Artwork commissioned to IZANAGIOOZ
 
 ---
