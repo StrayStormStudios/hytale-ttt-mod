@@ -179,7 +179,7 @@ testing, and limited to:
 
 - Code snippets.
 - Text content, descriptions, and documentation.
-- Original project logo, used as concept art.
+- Provisional concept art used for mandatory logos, banners, and also for prototyping with temporary models.
 
 ## Art
 
