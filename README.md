@@ -183,6 +183,6 @@ testing, and limited to:
 
 ## Art
 
-- A Trork in Trouble - Artwork commissioned to IZANAGIOOZ
+- [A Trork in Trouble](https://media.forgecdn.net/attachments/1577/86/48602-1-jpg.jpg) - Artwork commissioned to IZANAGIOOZ
 
 ---
