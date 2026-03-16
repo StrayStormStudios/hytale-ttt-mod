@@ -85,7 +85,7 @@ public class GameModeSystem {
         }
     }
 
-    private static void removeDroppedItems(World world) {
+    public static void removeDroppedItems(World world) {
         // Get the ECS Store for entities
         Store<EntityStore> store = world.getEntityStore().getStore();
 
@@ -112,7 +112,7 @@ public class GameModeSystem {
         });
     }
 
-    private static void removeGraveStones(GameModeState gameModeState, World world) {
+    public static void removeGraveStones(GameModeState gameModeState, World world) {
         gameModeState.graveStones.forEach(graveStone -> {
             Ref<EntityStore> namePlateReference = graveStone.getNamePlateReference();
             if (!DebugConfig.INSTANCE.isPersistentGraveStones()) {
@@ -199,6 +199,16 @@ public class GameModeSystem {
         }
     }
 
+    public static void removeCorpses(GameModeState state) {
+        state.corpses.forEach(corpse -> {
+            if (DebugConfig.INSTANCE.entitiesShouldDisappearAfterRound() && corpse.isValid()) {
+                corpse.getStore().removeEntity(corpse, RemoveReason.REMOVE);
+            }
+        });
+
+        state.corpses.clear();
+    }
+
     public void doAfterRound(World world, GameModeState state) {
         LOGGER.atInfo().log("Ending round in world %s - Executing after round logic", world.getWorldConfig().getDisplayName());
         world.execute(() -> {
@@ -223,19 +233,12 @@ public class GameModeSystem {
 
             for (var player : players) {
                 player.component().getInventory().clear();
-                player.info().getHud().update();
+                var hud = player.info().getHud();
+                if (hud != null) {
+                    hud.update();
+                }
             }
         });
-    }
-
-    private void removeCorpses(GameModeState state) {
-        state.corpses.forEach(corpse -> {
-            if (DebugConfig.INSTANCE.entitiesShouldDisappearAfterRound() && corpse.isValid()) {
-                corpse.getStore().removeEntity(corpse, RemoveReason.REMOVE);
-            }
-        });
-
-        state.corpses.clear();
     }
 
     public void doBeforeRound(World world, GameModeState state) {
@@ -259,7 +262,10 @@ public class GameModeSystem {
                 }
 
                 player.info().setCurrentRoundRole(null);
-                player.info().getHud().update();
+                var hud = player.info().getHud();
+                if (hud != null) {
+                    hud.update();
+                }
             }
         });
     }
